@@ -1,0 +1,23 @@
+{% load insp_filter %}
+{% for reply in replies %}
+<div class="card-body" style="background-color: #fffafa;">
+    <div id="replies-{{ reply.id }}">
+        <p id="reply-content-{{ reply.id }}">{{ reply.content }}</p>
+        <small class="text-muted">{{ reply.writer.username }} {{ reply.create_date|date:"Y-m-d H:i" }}</small>
+        {% if request.user == reply.writer %}
+            <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ reply.id }}">수정</a>
+            <a href="{% url 'insp:delete_comment' reply.id %}" class="btn btn-sm btn-outline-secondary delete-comment-button">삭제</a>
+        {% endif %}
+            {% comment %} <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ reply.id }}" data-url="{% url 'insp:vote_comment' reply.id %}">👍</button> {% endcomment %}
+            {% comment %} <span class="badge rounded-pill bg-success" id="vote-count-{{ reply.id }}">{{ reply.voter.count }}</span> {% endcomment %}
+        {% if user.is_authenticated %}
+            {% comment %} <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ reply.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=reply.id %}">댓글</button> {% endcomment %}
+        {% endif %}
+    </div>
+    <div id="reply-form-{{ reply.id }}" class="collapse reply-form-container"></div>
+</div>
+{% endfor %}
+
+<script>
+
+</script>

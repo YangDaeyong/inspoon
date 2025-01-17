@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h5 class="my-3 border-bottom pb-2">지혜 등록</h5>
+    <form method="post">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책 정보 입력</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .required:after {
+            content: '*';
+            color: red;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container mt-5">
+    <form method="post" id="bookForm" onsubmit="return validateForm()">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td class="required">제목</td>
+                    <td class="required">저자</td>
+                    <td class="required">본문 시작 페이지</td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="title" class="form-control" required value = "{{ form.title.value|default_if_none:'' }}"></td>
+                    <td><input type="text" name="author" class="form-control" required value = "{{ form.author.value|default_if_none:'' }}"></td>
+                    <td><input type="number" name="pages" class="form-control" required value = "{{ form.pages.value|default_if_none:'' }}"></td>
+                </tr>
+                <tr>
+                    <td>번역자 -해당하는 경우</td>
+                    <td>출판사</td>
+                    <td>발행일</td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="translator" class="form-control" value = "{{ form.translator.value|default_if_none:'' }}"></td>
+                    <td><input type="text" name="publisher" class="form-control" value="{{ form.publisher.value|default_if_none:'' }}"></td>
+                    <td><input type="date" name="pub_date" class="form-control" value="{{ form.pub_date.value|default_if_none:'' }}"></td>
+                </tr>
+                <tr> 
+                    <th class="required"> 영감을 받은 본문 </span><th>
+                </tr>
+                <tr>
+                    <td colspan="3"><textarea class="form-control" 
+                    name="content" rows="10">{{ form.content.value|default_if_none:'' }}</textarea>
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">제출</button>
+    </form>
+</div>
+
+
+
+<script>
+    function validateForm() {
+        const form = document.getElementById('bookForm');
+        const requiredFields = form.querySelectorAll('input[required]');
+        let valid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value) {
+                valid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        return valid;
+    }
+</script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+
+{% endblock %}

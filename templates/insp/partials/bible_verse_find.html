@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <h3>성경 구절 검색</h3>
+    <form method="post" action="{% url 'insp:bible_verse' %}">
+        {% csrf_token %}
+        <label for="version">성경 버전:</label>
+        <select name="version" id="version">
+            {% for code, name in versions %}
+                <option value="{{ code }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="book">책:</label>
+        <select name="book" id="book" onchange="updateChapters()">
+            {% for code, name in books %}
+                <option value="{{ code }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="chapter">장:</label>
+        <select name="chapter" id="chapter">
+        {% comment %} <select name="chapter" id="chapter" onchange="updateVerses()"> {% endcomment %}
+            {% for chapter in chapters %}
+                <option value="{{ chapter }}">{{ chapter }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <button type="submit">조회</button>
+    </form>
+
+    <div>
+        <h4>내용:</h4>
+        <p>{{ verse }}</p>
+    </div>
+
+
+    
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        function updateChapters() {
+            const book = document.getElementById('book').value;
+            const chapters = JSON.parse('{{ chapters_json|escapejs }}');
+            const chapterSelect = document.getElementById('chapter');
+            chapterSelect.innerHTML = '';
+            for (let i = 1; i <= chapters[book]; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = i;
+                chapterSelect.appendChild(option);
+            }
+        }
+{% comment %} 
+        function updateVerses() {
+            const book = document.getElementById('book').value;
+            const chapter = document.getElementById('chapter').value;
+            const verses = JSON.parse('{{ verses_json|escapejs }}');
+            const verseSelect = document.getElementById('verse');
+            verseSelect.innerHTML = '';
+            for (let i = 1; i <= verses[book][chapter]; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = i;
+                verseSelect.appendChild(option);
+            }
+        } {% endcomment %}
+        updateChapters();
+        {% comment %} updateVerses(); {% endcomment %}
+    </script>
+
+{% endblock %}

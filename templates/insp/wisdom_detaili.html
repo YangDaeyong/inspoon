@@ -1,0 +1,510 @@
+{% extends 'base.html' %}
+{% load insp_filter %}
+{% block content %}
+<div class="container my-3">
+    {% if messages %}
+    <div class="alert alert-danger my-3" role="alert">
+    {% for message in messages %}
+        <strong>{{ message.tags }}</strong>
+        <ul>
+            <li>{{ message.message }}</li>
+        </ul>
+    {% endfor %}
+    </div>
+    {% endif %}
+    <div class="wisdom-info"> 
+        <span class="title" style="font-size: 2rem; font-weight: bold; margin-right: 20px;">{{ wisdom.title }} </span>
+        <span class="text-muted info">
+            {{ wisdom.pages }} | {{ wisdom.author }} | {{ wisdom.publisher }} | {{ wisdom.translator }}
+        </span>
+    </div>
+    
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text">{{ wisdom.content|mark }}</div>
+            <div class="d-flex justify-content-end">
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <div class="mb-2">{{ wisdom.writer.username }} 작성 {{ wisdom.create_date|format_datetime }}</div>
+                    {% if wisdom.modify_date %}
+                    <div class="badge bg-light text-dark p-2 text-start mx-3">
+                        <div class="mb-2">수정 {{ wisdom.modify_date|date:"Y-m-d H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="my-3">
+                <a href="javascript:void(0)" data-uri="{% url 'insp:wisdom_vote' wisdom.id %}"
+                   class="recommend btn btn-sm btn-outline-secondary"> 추천
+                    <span class="badge rounded-pill bg-success">{{ wisdom.voter.count }}</span>
+                </a>
+                {% if request.user == wisdom.writer %}
+                <a href="{% url 'insp:wisdom_modify' wisdom.id %}" class="btn btn-sm btn-outline-secondary">수정</a>
+                <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary" data-uri="{% url 'insp:wisdom_delete' wisdom.id %}">삭제</a>
+                {% endif %}
+            </div>
+            <hr>
+
+
+            
+            
+            <!-- wisdom에 댓글 폼 -->
+            <h6 class="border-bottom my-3 py-2">{{ comments_page.paginator.count }}개 댓글
+                <button class="btn btn-sm btn-outline-secondary toggle-comment-btn" type="button" data-target="#wisdomCommentSection" id="toggleCommentButton1">OPEN</button>
+                <div class="dropdown d-inline">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        정렬 기준
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                        <li><a class="dropdown-item" href="?sort=-voter__count">인기 댓글순</a></li>
+                        <li><a class="dropdown-item" href="?sort=-create_date">최신순</a></li>
+                    </ul>
+                </div>
+            </h6>
+            <div id="wisdomCommentSection" class="collapse" data-target-section="wisdomCommentSection">
+            {% if user.is_authenticated %}
+            <form action="{% url 'insp:add_comment' object_id=wisdom.id object_type='wisdom' %}" method="post" class="my-3 comment-form" data-target-section="wisdomCommentSection">
+                {% csrf_token %}
+                {% include "form_errors.html" %}
+                <div class="mb-3 d-flex">
+                    <textarea name="content" class="form-control comment-textarea wisdom-content" rows="1" onfocus="showButtonAndExpand('wisdom')" onblur="hideButtonAndShrink('wisdom')"></textarea>
+                    <button type="submit" class="btn btn-sm btn-primary submit-button wisdom-button" style="display:none">댓글</button>
+                </div>
+            </form>
+            {% endif %}
+                <div id="comments-container">
+
+
+                    {% for comment in comments_page %}
+                    <div class="card my-3">
+                        <div class="card-body">
+                            <div class="card-text">{{ comment.content }}
+                                <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                                {% if request.user == comment.writer %}
+                                <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}">수정</a>
+                                {% comment %} <a href="{% url 'insp:edit_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">수정</a> {% endcomment %}
+                                <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                                {% endif %}
+                                <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                                <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                                {% if user.is_authenticated %}
+                                <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment' object_id=comment.id object_type='comment' %}">댓글</button>
+                                {% endif %}
+                            </div>
+                            <div id="reply-form-{{ comment.id }}" class="collapse reply-form-container"></div>
+                            {% if comment.replies.count > 0 %}
+                            <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}">
+                                {{ comment.replies.count }}개 댓글
+                            </button>
+                            <div id="replies-{{ comment.id }}" class="collapse">
+                                {% include 'insp/partials/replies_section.html' with replies=comment.replies.all %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-center">
+                        {% if comments_page.has_previous %} 
+                        <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ comments_page.previous_page_number }}">이전</button> 
+                        {% endif %} 
+                        {% if comments_page.has_next %} <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ comments_page.next_page_number }}">다음</button> 
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 영감 목록 보기 -->
+    <h5 class="border-bottom my-3 py-2">{{ inspiration_list.paginator.count }}개의 영감
+        <button class="btn btn-sm btn-outline-secondary toggle-comment-btn" type="button" data-target="#inspirationList" id="toggleCommentButton2">OPEN</button>
+    </h5>
+    <div id="inspirationList" class="collapse">
+        {% if inspiration_list %}
+        {% for inspiration in inspiration_list %}
+        <div class="card my-3">
+            <div class="card-body">
+                <div class="card-text">{{ inspiration.content|mark }}</div>
+
+                <div class="d-flex justify-content-end">
+                    <div class="badge bg-light text-dark p-2 text-start">
+                        <div class="mb-2">{{ inspiration.writer.username }} 작성 {{ inspiration.create_date|date:"Y-m-d H:i" }}</div>
+                        {% if inspiration.modify_date %}
+                        <div class="badge bg-light text-dark p-2 text-start mx-3">
+                            <div class="mb-2">수정 {{ inspiration.modify_date|date:"Y-m-d H:i" }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="my-3">
+                    <a href="javascript:void(0)" data-uri="{% url 'insp:inspiration_vote' inspiration.id %}" class="recommend btn btn-sm btn-outline-secondary"> 추천
+                        <span class="badge rounded-pill bg-success">{{ inspiration.voter.count }}</span>
+                    </a>
+                    {% if request.user == inspiration.writer %}
+                    <a href="{% url 'insp:inspiration_modify' inspiration.id %}" class="btn btn-sm btn-outline-secondary">수정</a>
+                    <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary" data-uri="{% url 'insp:inspiration_delete' inspiration.id %}">삭제</a>
+                    {% endif %}
+                </div>
+                <hr>
+                <!-- inspiration에 댓글 폼 -->
+                <h6 class="border-bottom my-3 py-2">{{ inspirations_comments|get_item:inspiration.id|length }}개 댓글
+                    <button class="btn btn-sm btn-outline-secondary toggle-comment-btn" type="button" data-target="#inspirationCommentSection{{ forloop.counter }}" id="toggleCommentButton{{ forloop.counter }}">OPEN</button>
+                </h6>
+            <div id="inspirationCommentSection{{ forloop.counter }}" class="collapse">
+                    <form action="{% url 'insp:add_comment' object_id=inspiration.id object_type='inspiration' %}" method="post" class="my-3 comment-form" data-target-section="inspirationCommentSection">
+                        {% csrf_token %}
+                        {% include "form_errors.html" %}
+                        <div class="mb-3 d-flex">
+                            <textarea name="content" class="form-control comment-textarea inspiration-content" rows="1" onfocus="showButtonAndExpand('inspiration')" onblur="hideButtonAndShrink('inspiration')"></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary submit-button inspiration-button" style="display:none;">댓글</button>
+                        </div>
+                    </form>
+                
+                {% if inspirations_comments and inspirations_comments|get_item:inspiration.id %}
+                {% for comment in inspirations_comments|get_item:inspiration.id %}
+                <div class="card my-3">
+                    <div class="card-body">
+                        <div class="card-text">{{ comment.content }}
+                            <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                            {% if request.user == comment.writer %}
+                            <a href="{% url 'insp:edit_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">수정</a>
+                            <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                            {% endif %}
+                        </div>
+                        {% if comment.replies.count > 0 %}
+                        <div class="card my-3 ml-5">
+                            {% for reply in comment.replies.all %}
+                            <div class="card-body">
+                                <div class="card-text">{{ reply.content }}
+                                    <small class="text-muted">{{ reply.writer.username }} {{ reply.create_date|date:"Y-m-d H:i" }}</small>
+                                    {% if request.user == reply.writer %}
+                                    <a href="{% url 'insp:edit_comment' reply.id %}" class="btn btn-sm btn-outline-secondary">수정</a>
+                                    <a href="{% url 'insp:delete_comment' reply.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <hr style="margin: 0 10px">
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+            </div>
+        </div>
+        
+        {% endfor %}
+        {% else %}
+        <p>등록된 영감이 없습니다.</p>
+        {% endif %}
+        <form action="{% url 'insp:inspiration_create' wisdom.id %}" method="post" class="my-3" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% include "form_errors.html" %}
+            <div class="">
+                <label for="content" class="form-label">Inspiration Share-글/시/그림/음악 etc</label>
+                <textarea {% if not user.is_authenticated %}disabled{% endif %}
+                          name="content" id="content" class="form-control" rows="8"></textarea>
+            </div>
+            <div class="mt-3">
+                <label for="file" class="form-label">파일 업로드 (사진/음악)</label>
+                <input type="file" name="file" id="file" class="form-control" multiple>
+            </div>
+            <input type="submit" value="share_insp" class="btn btn-primary mt-3">
+        </form>        
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toggle-comment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const target = document.querySelector(this.getAttribute('data-target'));
+            if (target.style.display === 'none' || target.style.display === '') {
+                target.style.display = 'block';
+                this.textContent = 'CLOSE'; // 버튼 텍스트 변경
+            } else {
+                target.style.display = 'none';
+                this.textContent = 'OPEN'; // 버튼 텍스트 변경
+            }
+        });
+    });
+});
+
+
+function showButtonAndExpand(type) {
+    const submitButton = document.querySelector(`.${type}-button`);
+    const contentTextarea = document.querySelector(`.${type}-content`);
+    if (submitButton && contentTextarea) {
+        submitButton.style.display = 'inline';
+        contentTextarea.rows = 2;
+    }
+}
+
+function hideButtonAndShrink(type) {
+    const submitButton = document.querySelector(`.${type}-button`);
+    const contentTextarea = document.querySelector(`.${type}-content`);
+    if (submitButton && contentTextarea && contentTextarea.value.trim() === '') {
+        submitButton.style.display = 'none';
+        contentTextarea.rows = 1;
+    }
+}
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-comment-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const commentContent = document.getElementById(`comment-content-${commentId}`);
+            const originalContent = commentContent.textContent.trim();
+            const editUrl = `{% url 'insp:edit_comment' 0 %}`.replace('0', commentId);
+
+            commentContent.innerHTML = `
+                <form action="${editUrl}" method="post" class="edit-comment-form">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                    <div class="mb-3 d-flex">
+                        <textarea name="content" class="form-control comment-textarea" rows="2">${originalContent}</textarea>
+                        <button type="submit" class="btn btn-sm btn-primary">저장</button>
+                        <button type="button" class="btn btn-sm btn-secondary cancel-edit-button">취소</button>
+                    </div>
+                </form>
+            `;
+
+            // 취소 버튼 이벤트 리스너 추가
+            commentContent.querySelector('.cancel-edit-button').addEventListener('click', function() {
+                commentContent.innerHTML = originalContent;
+            });
+
+            // 폼 제출 시 Ajax로 처리
+            const editForm = commentContent.querySelector('.edit-comment-form');
+            editForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData(editForm);
+
+                xhr.open('POST', editForm.action, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        commentContent.innerHTML = xhr.responseText;
+                    }
+                };
+
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                xhr.setRequestHeader('X-CSRFToken', csrfToken);
+                xhr.send(formData);
+            });
+        });
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.vote-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const voteUrl = this.dataset.url;
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', voteUrl, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    const voteCount = document.getElementById(`vote-count-${commentId}`);
+                    voteCount.textContent = response.votes;
+                }
+            };
+            const csrfToken = getCookie('csrftoken');
+            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+            xhr.send();
+        });
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.sort-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const sort = this.dataset.sort;
+            updateComments({ sort: sort });
+        });
+    });
+
+    document.querySelectorAll('.page-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const page = this.dataset.page;
+            updateComments({ page: page });
+        });
+    });
+
+    function updateComments(params) {
+        const urlParams = new URLSearchParams(window.location.search);
+        for (const key in params) {
+            if (params.hasOwnProperty(key)) {
+                urlParams.set(key, params[key]);
+            }
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `${window.location.pathname}?${urlParams.toString()}`, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                document.getElementById('comments-container').innerHTML = xhr.responseText;
+                reattachEventHandlers();
+            }
+        };
+        xhr.send();
+    }
+
+    function reattachEventHandlers() {
+        document.querySelectorAll('.reply-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const replyUrl = this.dataset.url;
+                const replyFormContainer = document.getElementById(`reply-form-${commentId}`);
+
+                if (!replyFormContainer.classList.contains('show')) {
+                    replyFormContainer.innerHTML = `
+                        <form action="${replyUrl}" method="post" class="my-3 comment-form" data-target-section="replies-${commentId}">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                            <div class="mb-3 d-flex">
+                                <textarea name="content" class="form-control comment-textarea" rows="1"></textarea>
+                                <button type="submit" class="btn btn-sm btn-primary submit-button">댓글</button>
+                                <input type="hidden" name="parent_id" value="${commentId}">
+                            </div>
+                        </form>
+                    `;
+                    replyFormContainer.classList.add('show');
+                    attachFormSubmitHandler(replyFormContainer.querySelector('form'));
+                } else {
+                    replyFormContainer.classList.remove('show');
+                    replyFormContainer.innerHTML = '';
+                }
+            });
+        });
+
+
+
+        document.querySelectorAll('.show-replies-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const repliesContainer = document.getElementById(`replies-${commentId}`);
+                repliesContainer.classList.toggle('show');
+            });
+        });
+
+        document.querySelectorAll('.page-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const page = this.dataset.page;
+                updateComments({ page: page });
+            });
+        });
+
+        document.querySelectorAll('.sort-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const sort = this.dataset.sort;
+                updateComments({ sort: sort });
+            });
+        });
+    }
+
+
+
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function attachFormSubmitHandler(form) {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const xhr = new XMLHttpRequest();
+            const formData = new FormData(form);
+
+            xhr.open('POST', form.action, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const targetSectionId = form.getAttribute('data-target-section');
+                    document.getElementById(targetSectionId).innerHTML = xhr.responseText;
+                    form.reset();
+                    document.querySelector(`#replies-${targetSectionId.split('-')[1]}`).classList.add('show');
+                }
+            };
+            const csrfToken = getCookie('csrftoken');
+            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+            xhr.send(formData);
+        });
+    }
+
+    reattachEventHandlers();
+});
+
+
+
+
+
+
+
+
+
+</script>
+{% endblock %}

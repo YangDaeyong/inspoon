@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load insp_filter %}
+{% block content %}
+<div class="container my-3">
+    <!-- message 표시 -->
+    {% if messages %}
+    <div class="alert alert-danger my-3" role="alert">
+    {% for message in messages %}
+        <strong>{{ message.tags }}</strong>
+        <ul>
+            <li>{{ message.message }}</li>
+        </ul>
+    {% endfor %}
+    </div>
+    {% endif %}
+    <!-- 질문 -->
+    <h2 class="border-bottom py-2">{{ wisdom.title }}</h2>
+        <div class="card my-3">
+            <div class="card-body">
+                <div class="card-text">{{ wisdom.wisdom|mark }}</div>
+                    <div class="d-flex justify-content-end">
+                        <div class="badge bg-light text-dark p-2 text-start">
+                            <div class="mb-2"> {{wisdom.writer.username}} 작성 {{ wisdom.create_date }}</div>
+                            {% if wisdom.modify_date %}
+                                <div class="badge bg-light text-dark p-2 text-start mx-3">
+                                    <div class="mb-2"> 수정 {{ wisdom.modify_date }}</div>
+                                </div>
+                            {% endif %}
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- 답변 -->
+    <h5 class="border-bottom my-3 py-2">{{wisdom.inspiration_set.count}}개 의견
+        <button class="btn btn-sm btn-outline-secondary toggle-inspiration-btn" type="button" 
+        data-bs-toggle="collapse" data-bs-target="#inspiration_list"
+        aria-expanded="false" id="toggleInspirationButton">OPEN</button>
+    </h5>
+    <!-- <a id="inspiration_{{ inspiration.id }}"></a> -->
+    
+    {% for inspiration in inspiration_list %}
+    <div class="card my-3 collapse" id="inspiration_list">
+        <div class="card-body">
+            <div class="card-text">{{ inspiration.content|mark }}</div>
+            <div class="d-flex justify-content-end">
+                {% if inspiration.modify_date %}
+                <div class="badge bg-light text-dark p-2 text-start mx-3">
+                    <div class="mb-2">modified at</div>
+                    <div>{{ inspiration.modify_date }}</div>
+                </div>
+                {% endif %}
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <div class="mb-2">{{ inspiration.writer.username }}</div>
+                    <div>{{ inspiration.create_date }}</div>
+                </div>
+            </div>
+            <div class="my-3">
+                <a href="javascript:void(0)" data-uri="{% url 'insp:inspiration_vote' inspiration.id  %}"
+                   class="recommend btn btn-sm btn-outline-secondary"> 추천
+                    <span class="badge rounded-pill bg-success">{{inspiration.voter.count}}</span>
+                </a>
+                {% if request.user == inspiration.writer %}
+                <a href="{% url 'insp:inspiration_modify' inspiration.id  %}"
+                   class="btn btn-sm btn-outline-secondary">수정</a>
+                <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary "
+                   data-uri="{% url 'insp:inspiration_delete' inspiration.id  %}">삭제</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <form id="searchForm" method="get">
+        <input type="hidden" id="page" name="page" value="{{ page }}">
+    </form>
+
+    <!-- 의견 페이징 처리 시작 -->
+    <ul class="pagination justify-content-center">
+        <!-- 이전페이지 -->
+        {% if inspiration_list.has_previous %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ inspiration_list.previous_page_number}}"
+            href="javascript:void(0)">이전</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" 
+            href="javascript:void(0)">이전</a>
+        </li>
+        {% endif %}
+        <!-- 페이지리스트 -->
+        {% for page_number in inspiration_list.paginator.page_range %}
+        {% if page_number >= inspiration_list.number|add:-5 and page_number <= inspiration_list.number|add:5 %}
+        {% if page_number == inspiration_list.number %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link" data-page="{{ page_number}}" 
+               href="javascript:void(0)">{{ page_number }}</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ page_number }}"
+               href="javascript:void(0)">{{ page_number }}</a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}            
+        <!-- 다음페이지 -->
+        {% if inspiration_list.has_next %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ inspiration_list.next_page_number }}"
+                href="javascript:void(0)">다음</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" 
+            href="javascript:void(0)">다음</a>
+        </li>
+        {% endif %}
+    </ul>
+    <!-- 페이징처리 끝 -->    
+
+    <form action="{% url 'insp:inspiration_create' wisdom.id %}" method="post" class="my-3">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <div class="mb-3">
+            <label for="content" class="form-label">Inspiration Share-글/시/그림/음악 etc</label>
+            <textarea {% if not user.is_authenticated %}disabled{% endif %}
+                       name="content" id="content" class="form-control" rows="8"></textarea>
+        </div>
+        <input type="submit" value="답변등록" class="btn btn-primary">
+    </form>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script type='text/javascript'>
+// 댓글 토글 버튼
+
+
+// 답변 토글 버튼
+
+
+
+// 삭제, 추천, 
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const delete_elements = document.getElementsByClassName("delete");
+    Array.from(delete_elements).forEach(function(element) {
+        element.addEventListener('click', function() {
+            if(confirm("정말로 삭제하시겠습니까?")) {
+                location.href = this.dataset.uri;
+            };
+        });
+    });
+    
+    const recommend_elements = document.getElementsByClassName("recommend");
+    Array.from(recommend_elements).forEach(function(element) {
+        element.addEventListener('click', function() {
+            if(confirm("정말로 추천하시겠습니까?")) {
+                location.href = this.dataset.uri;
+            };
+        });
+    });    
+});
+
+function showButtonAndExpand() {
+    const submitButton = document.getElementById('submitButton');
+    const contentTextarea = document.getElementById('content');
+    if (submitButton && contentTextarea) {
+        submitButton.style.display = 'inline';
+        contentTextarea.rows = 3;
+    }
+}
+
+function hideButtonAndShrink() {
+    const submitButton = document.getElementById('submitButton');
+    const contentTextarea = document.getElementById('content');
+    if (submitButton && contentTextarea && contentTextarea.value.trim() === '') {
+        submitButton.style.display = 'none';
+        contentTextarea.rows = 1;
+    }
+}
+</script>
+{% endblock %}

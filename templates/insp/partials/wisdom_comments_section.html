@@ -1,0 +1,175 @@
+<div id="wisdom-comments-container">
+    {% load insp_filter %}
+    <div class="wisdom-comments" data-wisdom-id="{{ object_id }}">
+        <p id="new-comments-container" ></p>
+        {% for comment in comments %}
+        <div class="card-body" style="background-color: #e0ffff;">
+            <div id="comment-{{ comment.id }}">
+                <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+                <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                {% if user == comment.writer %}
+                    <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:edit_comment' comment.id %}">수정</a>    
+                    <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary delete-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:delete_comment' comment.id %}" data-object-type="comment">삭제</a>
+                {% endif %}
+                    <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                    <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                {% if user.is_authenticated %}
+                    <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}">댓글</button>
+                    <div id="reply-form-{{ comment.id }}" class="collapse"></div>
+                {% endif %}
+                {% if replies_count|dictkey:comment.id > 0 %}
+                <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}">
+                    {{ replies_count|dictkey:comment.id }}개
+                </button>
+                <div id="comment-{{ comment.id }}-replies" class="collapse">
+                    {% include 'insp/partials/replies_section.html' with replies=replies|dictkey:comment.id %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        <div id="pagination-container-wisdom" class="d-flex justify-content-center">
+            {% if comments.has_previous %}
+                <button class="btn btn-sm btn-outline-secondary page-btn" data-url="{% url 'insp:comments' comment_type='wisdom' object_id=object_id %}?page={{ comments.previous_page_number }}&sort={{ sort }}" data-container="wisdom-comments-container">이전</button>
+            {% endif %}
+            {% if comments.has_next %}
+                <button class="btn btn-sm btn-outline-secondary page-btn" data-url="{% url 'insp:comments' comment_type='wisdom' object_id=object_id %}?page={{ comments.next_page_number }}&sort={{ sort }}" data-container="wisdom-comments-container">다음</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} <div id="wisdom-comments-container">
+    {% load insp_filter %}
+    <div class="wisdom-comments" data-wisdom-id="{{ wisdom.id }}">
+        <!-- 정렬 옵션 -->
+        <div class="sort-options">
+            <button class="btn btn-sm btn-outline-secondary sort-option" data-sort="-create_date" data-section="wisdom_comments">최신순</button>
+            <button class="btn btn-sm btn-outline-secondary sort-option" data-sort="-voter" data-section="wisdom_comments">추천순</button>
+        </div>
+        {% for comment in wisdom_comments %}
+        <div class="card-body">
+            <div id="comment-{{ comment.id }}">
+                <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+                <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                {% if request.user == comment.writer %}
+                    <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}">수정</a>
+                    <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                {% endif %}
+                    <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                    <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                {% if user.is_authenticated %}
+                    <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}">댓글</button>
+                {% endif %}
+                <div id="reply-form-{{ comment.id }}" class="collapse reply-form-container"></div>
+                {% if wisdom_replies_count.comment.id > 0 %}
+                <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}">
+                    {{ wisdom_replies_count.comment.id }}개 댓글
+                </button>
+                <div id="replies-{{ comment.id }}" class="collapse">
+                    
+                    {% include 'insp/partials/replies_section.html' with replies=wisdom_replies.comment.id %}
+                    
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% endfor %}
+        <div id="pagination-container-wisdom" class="d-flex justify-content-center">
+            {% if wisdom_comments.has_previous %}
+            <button class="btn btn-sm btn-outline-secondary page-btn" data-url="{% url 'insp:wisdom_comments' object_id=wisdom.id %}?page={{ wisdom_comments.previous_page_number }}&sort={{ sort }}" data-container="wisdom-comments-container">이전</button>
+            <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ wisdom_comments.previous_page_number }}" data-sort="{{ sort }}" data-comment-type="wisdom" data-object-id="{{ wisdom.id }}" data-container="wisdom-comments-container">이전</button>
+            {% endif %}
+            {% if wisdom_comments.has_next %}
+            <button class="btn btn-sm btn-outline-secondary page-btn" data-url="{% url 'insp:wisdom_comments' object_id=wisdom.id %}?page={{ wisdom_comments.next_page_number }}&sort={{ sort }}" data-container="wisdom-comments-container">다음</button>
+            <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ wisdom_comments.next_page_number }}" data-sort="{{ sort }}" data-comment-type="wisdom" data-object-id="{{ wisdom.id }}" data-container="wisdom-comments-container">다음</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+    
+<script>
+    if (typeof attachEventHandlers === 'function') {
+        attachEventHandlers();  // AJAX로 로드된 후 이벤트 핸들러 재연결
+    } else {
+        console.error('attachEventHandlers 함수가 정의되지 않았습니다.');
+    }
+</script> {% endcomment %}
+
+
+
+{% comment %} {% load insp_filter %}
+
+<div id="wisdom-comments-container">
+    <div class="wisdom-comments" data-wisdom-id="{{ wisdom.id }}">
+    {% for comment in wisdom_comments %}
+        <div class="card-body">
+            <div id="comment-{{ comment.id }}">
+                <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+                <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                {% if request.user == comment.writer %}
+                    <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}">수정</a>
+                    <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                {% endif %}
+                    <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                    <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                {% if user.is_authenticated %}
+                    <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}">댓글</button>
+                {% endif %}
+            </div>
+            <div id="reply-form-{{ comment.id }}" class="collapse reply-form-container"></div>
+                {% if wisdom_replies_count > 0 %}
+                {% for reply in wisdom_replies.comment.id %}
+                <div class="card-body" data-comment-id="{{ comment.id }}"> {{ comment.replies.count }}개 댓글
+                    <div class="card-text"> {{ reply.content }}
+                        <small class="text-muted">{{ reply.writer.username }} {{ reply.create_date|date:"Y-m-d H:i" }}</small>
+                        {% if request.user == reply.writer %}
+                            <a href="{% url 'insp:edit_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">수정</a>
+                            <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <hr style="margin: 0 10px">
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+        <div id="pagination-container-wisdom" class="d-flex justify-content-center">
+            {% if wisdom_comments.has_previous %}
+                <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ wisdom_comments.previous_page_number }}" data-sort="{{ sort }}" data-wisdom-id="{{ wisdom.id }}" data-url="{% url 'insp:wisdom_comments' wisdom_comments.previous_page_number %}?wisdom_id={{ wisdom.id }}&sort={{ sort }}" data-container="wisdom-comments-container">이전</button>
+            {% endif %}
+            {% if wisdom_comments.has_next %}
+                <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ wisdom_comments.next_page_number }}" data-sort="{{ sort }}" data-wisdom-id="{{ wisdom.id }}" data-url="{% url 'insp:wisdom_comments' wisdom_comments.next_page_number %}?wisdom_id={{ wisdom.id }}&sort={{ sort }}" data-container="wisdom-comments-container">다음</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    attachEventHandlers();  // AJAX로 로드된 후 이벤트 리스너 재연결
+</script> {% endcomment %}

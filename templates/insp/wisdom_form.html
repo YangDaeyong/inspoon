@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-5">
+    <h5 class="my-3 border-bottom pb-2">지혜 등록</h5>
+    <form method="post">
+    {% csrf_token %}
+    {% include "form_errors.html" %}
+    <form method="post" id="bookForm" onsubmit="return validateForm()">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td class="required">Book</td>
+                    <td class="required">장</td>
+                    <td class="required">절</td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="title" class="form-control" required value = "{{ form.title.value|default_if_none:'' }}"></td>
+                    <td><input type="number" name="chapter" class="form-control" required value = "{{ form.chapter.value|default_if_none:'' }}"></td>
+                    <td><input type="number" name="verses" class="form-control" required value = "{{ form.verses.value|default_if_none:'' }}"></td>
+                </tr>
+                <tr>
+                    <td class="">저자 -필요한 경우</td>
+                    <td>Version -필요한 경우</td>
+                    <td>출판사</td>
+                    {% comment %} <td>발행일</td> {% endcomment %}
+                </tr>
+                <tr>
+                    <td><input type="text" name="author" class="form-control" required value = "{{ form.author.value|default_if_none:'' }}"></td>
+                    <td><input type="text" name="version" class="form-control" value = "{{ form.version.value|default_if_none:'' }}"></td>
+                    <td><input type="text" name="publisher" class="form-control" value="{{ form.publisher.value|default_if_none:'' }}"></td>
+                    {% comment %} <td><input type="date" name="pub_date" class="form-control" value="{{ form.pub_date.value|default_if_none:'' }}"></td> {% endcomment %}
+                </tr>
+                <tr> 
+                    <th class="required"> 영감을 받은 절과 내용 </span><th>
+                </tr>
+                <tr>
+                    <td colspan="3"><textarea class="form-control" 
+                    name="content" rows="10">{{ form.content.value|default_if_none:'' }}</textarea>
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">제출</button>
+    </form>
+
+
+
+
+    <h5>성경 구절 찾기</h5>
+    <form method="post" id="bibleForm">
+    {% csrf_token %}
+        <table class="table">
+                <tr>
+                    <td class="required">Version</td>
+                    <td class="required">Book</td>
+                    <td class="required">장</td>
+                    <td class="required">절</td>
+                    <td class="required"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <select name="version" id="version" class="form-control">
+                            {% for code, name in versions %}
+                                <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="book" id="book" class="form-control" onchange="updateChapters()">
+                            {% for code, name in books %}
+                                <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="chapter" id="chapter" class="form-control">
+                            {% for chapter in chapters %}
+                                <option value="{{ chapter }}">{{ chapter }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" name="verses" id="verses" class="form-control" placeholder="4,7,9 or 4-20">
+                    </td>
+                    <td><button type="submit" class="btn btn-primary" name="search_verse">조회</button></td>
+                </tr>
+        </table>
+    </form>
+    <div>
+    <p id="verseContent">{{ verse|escapejs }}</p>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function validateForm() {
+        const form = document.getElementById('bookForm');
+        const requiredFields = form.querySelectorAll('input[required]');
+        let valid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value) {
+                valid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        return valid;
+    }
+
+    function updateChapters() {
+        const book = document.getElementById('book').value;
+        const chapterSelect = document.getElementById('chapter');
+        chapterSelect.innerHTML = '';
+        fetch(`{% url 'insp:get_chapters' %}?book=${book}`)
+            .then(response => response.json())
+            .then(data => {
+                const chapters = data.chapters;
+                chapters.forEach(chapter => {
+                    const option = document.createElement('option');
+                    option.value = chapter;
+                    option.text = chapter;
+                    chapterSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching chapters:', error);
+            });
+    }
+
+    document.getElementById('bibleForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        fetch("{% url 'insp:wisdom_form' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('verseContent').innerHTML = data.verse;
+        })
+        .catch(error => {
+            console.error('Error fetching verse:', error);
+            alert('An error occurred while fetching the verse. Please try again.');
+        });
+    });
+</script>
+
+{% endblock %}

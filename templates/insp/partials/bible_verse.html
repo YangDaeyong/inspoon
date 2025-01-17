@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-5">
+<h3>성경 읽기</h3>
+<form id="bibleForm">
+    {% csrf_token %}
+    <label for="version">성경 버전:</label>
+    <select name="version" id="version">
+        {% for code, name in versions %}
+            <option value="{{ code }}">{{ name }}</option>
+        {% endfor %}
+    </select>
+    
+    <label for="book">책:</label>
+    <select name="book" id="book" onchange="updateChapters()">
+        {% for code, name in books %}
+            <option value="{{ code }}">{{ name }}</option>
+        {% endfor %}
+    </select>
+    
+    <label for="chapter">장:</label>
+    <select name="chapter" id="chapter">
+        {% for chapter in chapters %}
+            <option value="{{ chapter }}">{{ chapter }}</option>
+        {% endfor %}
+    </select>
+    
+    <button type="submit">조회</button>
+</form>
+
+<div style="padding:20;">
+    <p id="verseContent">{{ verse|escapejs }}</p>
+</div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateChapters() {
+        const book = document.getElementById('book').value;
+        const chapterSelect = document.getElementById('chapter');
+        chapterSelect.innerHTML = '';
+        fetch(`{% url 'insp:get_chapters' %}?book=${book}`)
+            .then(response => response.json())
+            .then(data => {
+                const chapters = data.chapters;
+                chapters.forEach(chapter => {
+                    const option = document.createElement('option');
+                    option.value = chapter;
+                    option.text = chapter;
+                    chapterSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching chapters:', error);
+            });
+    }
+
+    document.getElementById('bibleForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        fetch("{% url 'insp:bible_verse' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('verseContent').innerHTML = data.verse;
+        })
+        .catch(error => {
+            console.error('Error fetching verse:', error);
+            alert('An error occurred while fetching the verse. Please try again.');
+        });
+    });
+</script>
+{% endblock %}

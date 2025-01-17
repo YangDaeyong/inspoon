@@ -1,0 +1,364 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성경 구조</title>
+    <link rel="stylesheet" href="{% static 'css/bible_list.css' %}">
+    {% comment %} <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> {% endcomment %}
+    <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            {% comment %} align-items: center; {% endcomment %}
+            background-color: #f8f9fa;
+            
+        }
+        #container {
+            position: relative;
+            text-align: center;
+            justify-content: center; /* 세로 가운데 정렬 */ 
+            width: 100%; /* 부모 컨테이너에 맞추기 */ 
+            height: 100%; /* 부모 컨테이너에 맞추기 */ 
+            box-sizing: border-box;
+
+        }
+        #expanded-section {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: row; /* 이 부분을 추가하여 좌우 배치 설정 */
+            justify-content: space-between;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(5, auto);
+            width: 100%;
+            height: 100%;
+        }
+        .bg-left {
+            grid-column: 1 / span 3;
+            grid-row: 1 / span 5;
+            background-image: url('../../static/img/OldTestament1.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            padding-left: 15px;
+            background-color: rgba(255, 255, 255, 0.8); /* Optional for readability */
+            justify-content: center; /* 세로 가운데 정렬 */ 
+            align-items: flex-end; /* 오른쪽 정렬 */
+        }
+        .bg-right {
+            grid-column: 5 / span 3;
+            grid-row: 1 / span 5;
+            background-image: url('../../static/img/NewTestament1.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            padding-right: 15px;
+            background-color: rgba(255, 255, 255, 0.8); /* Optional for readability */
+            justify-content: center; /* 세로 가운데 정렬 */ 
+            align-items: flex-start; /* 왼쪽 정렬
+        }
+        .center {
+            grid-column: 4;
+            grid-row: span 5;
+            background-color: transparent; /* 중앙 컬럼 투명하게 처리 */
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .button {
+            size: 10px;
+            background-color: rgb(3, 52, 105);
+            color: white;
+            padding: 7px 11px;
+            margin: 5px 0;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        .show {
+            display: block;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+    <script>
+        window.onload = function() {
+            const section = document.getElementById('expanded-section');
+            section.style.display = 'none';
+        };
+    
+        function toggleExpandedSection() {
+            const section = document.getElementById('expanded-section');
+            if (section.style.display === 'none') {
+                section.style.display = 'flex';
+            } else {
+                section.style.display = 'none';
+            }
+        }
+    
+    
+        function toggleVisibility(elementId) {
+            const element = document.getElementById(elementId);
+            if (element.classList.contains('hidden')) {
+                element.classList.remove('hidden');
+                element.classList.add('show');
+            } else {
+                element.classList.remove('show');
+                element.classList.add('hidden');
+            }
+        }
+    
+        function showDetails(mainId, detailsId) {
+            const mainElement = document.getElementById(mainId);
+            const detailsElement = document.getElementById(detailsId);
+            mainElement.classList.remove('show');
+            mainElement.classList.add('hidden');
+            detailsElement.classList.remove('hidden');
+            detailsElement.classList.add('show');
+        }
+    </script>
+</head>
+
+<body style="background-color:rgb(68, 70, 71);">
+    <div id="container">
+        <h1 style="text-align: center; color: white;">성경 묵상 <br> 默想, contemplation</h1>
+        <img src=" {% static "img/bible.jpg" %}" alt="bible">
+        <div id="buttons">
+            <button url={% url "insp:bible_verse" %} class="button">Quick</button>
+            <button class="button" onclick="toggleExpandedSection()">Deep</button>
+        </div>
+    </div>
+    <div id="expanded-section" class="container">
+        <!-- 1열 - 구약성경 섹션 -->
+        <div class="bg-left content" style="text-align:right ;grid-column: 1 / span 1; grid-row: span 5;">
+            <h2>구약성경</h2>
+            <div class="button-group">
+                <button href="path_to_old_testament_page.html" class="button">Quick</button>
+                <button class="button" onclick="toggleVisibility('old-testament-sections')">Deep</button>
+            </div>
+        </div>
+    
+        <!-- 2열 - 구약성경 5종류 -->
+        <div id="old-testament-sections" class="text-align:right ; hidden bg-left" style="grid-column: 2 / span 1; grid-row: span 5;">
+            <h4 style="color : rgba(210, 180, 140, 1) ;">모세5경</h4>
+            <div class="button-group">
+                <button href="path_to_law_books.html" class="button">Quick</button>
+                <button class="button" onclick="toggleVisibility('law-books-list')">Deep</button>
+            </div>
+            <h4 style="color :rgba(210, 180, 140, 0.9);">역사서</h4>
+            <div class="button-group">
+                <button href="path_to_history_books.html" class="button">Quick</button>
+                <button class="button" onclick="toggleVisibility('history-books-list')">Deep</button>
+            </div>
+            <h4 style="color :rgba(210, 180, 140, 0.8);">시가서</h4>
+            <div class="button-group">
+                <button href="path_to_poetry_books.html" class="button">Quick</button>
+                <button class="button" onclick="toggleVisibility('poetry-books-list')">Deep</button>
+            </div>
+            <h5 style="color :rgba(210, 180, 140, 0.9);">선지서(대)</h5>
+            <div class="button-group">
+                <button href="path_to_major_prophets.html" class="button">Quick</button>
+                <button class="button" onclick="toggleVisibility('major-prophets-list')">Deep</button>
+            </div>
+            <h5 style="color :rgba(210, 180, 140, 1);">선지서(소)</h5>
+            <div class="button-group">
+                <button href="path_to_minor_prophets.html" class="button">Quick</button>
+                <button class="button" onclick="toggleVisibility('minor-prophets-list')">Deep</button>
+            </div>
+        </div>
+    
+    <!-- 3열 - 구약성경 세부적인 책 목록 -->
+    <div class="bg-left" style="text-align:right ;grid-column: 3 / span 1; grid-row: span 5;">
+        <div style="color : rgba(210, 180, 140, 1) ;" id="law-books-list" class="hidden">
+            <ul>
+                <li>창세기</li>
+                <li>출애굽기</li>
+                <li>레위기</li>
+                <li>민수기</li>
+                <li>신명기</li>
+            </ul>
+        </div>
+        <div style="color : rgba(210, 180, 140, 0.9) ;" id="history-books-list" class="hidden">
+            <ul>
+                <li>여호수아</li>
+                <li>사사기</li>
+                <li>룻기</li>
+                <li>사무엘상</li>
+                <li>사무엘하</li>
+                <li>열왕기상</li>
+                <li>열왕기하</li>
+                <li>역대상</li>
+                <li>역대하</li>
+                <li>에스라</li>
+                <li>느헤미야</li>
+                <li>에스더</li>
+                <li>욥기</li>
+                <li>시편</li>
+                <li>잠언</li>
+            </ul>
+        </div>
+        <div style="color : rgba(210, 180, 140, 0.8) ;" id="poetry-books-list" class="hidden">
+            <ul>
+                <li>욥기</li>
+                <li>시편</li>
+                <li>잠언</li>
+                <li>전도서</li>
+                <li>아가</li>
+            </ul>
+        </div>
+        <div style="color : rgba(210, 180, 140, 0.9) ;" id="major-prophets-list" class="hidden">
+            <ul>
+                <li>이사야</li>
+                <li>예레미야</li>
+                <li>예레미야애가</li>
+                <li>에스겔</li>
+                <li>다니엘</li>
+            </ul>
+        </div>
+        <div style="color : rgba(210, 180, 140, 1) ;" id="minor-prophets-list" class="hidden">
+            <ul>
+                <li>호세아</li>
+                <li>요엘</li>
+                <li>아모스</li>
+                <li>오바댜</li>
+                <li>요나</li>
+                <li>미가</li>
+                <li>나훔</li>
+                <li>하박국</li>
+                <li>스바냐</li>
+                <li>학개</li>
+                <li>스가랴</li>
+                <li>말라기</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 4열 - 중앙 빈 컬럼 -->
+    <div class="center content" style="grid-column: 4; grid-row: span 5;"></div>
+    
+    <!-- 5열 - 신약성경 세부적인 책 목록 -->
+    <div class="bg-right" style="text-align:left ; grid-column: 5 / span 1; grid-row: span 5;">
+        <div style="color : rgba(221, 160, 221, 1);" id="gospels-books-list" class="hidden">
+            <ul>
+                <li>마태복음</li>
+                <li>마가복음</li>
+                <li>누가복음</li>
+                <li>요한복음</li>
+            </ul>
+        </div>
+        <div style="color : rgba(221, 160, 221, 0.9);" id="acts-books-list" class="hidden">
+            <ul>
+                <li>사도행전</li>
+            </ul>
+        </div>
+        <div style="color : rgba(221, 160, 221, 0.8);" id="pauline-epistles-list" class="hidden">
+            <ul>
+                <li>로마서</li>
+                <li>고린도전서</li>
+                <li>고린도후서</li>
+                <li>갈라디아서</li>
+                <li>에베소서</li>
+                <li>빌립보서</li>
+                <li>골로새서</li>
+                <li>데살로니가전서</li>
+                <li>데살로니가후서</li>
+                <li>디모데전서</li>
+                <li>디모데후서</li>
+                <li>디도서</li>
+                <li>빌레몬서</li>
+            </ul>
+        </div>
+        <div style="color : rgba(221, 160, 221, 0.9);" id="general-epistles-list" class="hidden">
+            <ul>
+                <li>히브리서</li>
+                <li>야고보서</li>
+                <li>베드로전서</li>
+                <li>베드로후서</li>
+                <li>요한일서</li>
+                <li>요한이서</li>
+                <li>요한삼서</li>
+                <li>유다서</li>
+            </ul>
+        </div>
+        <div style="color : rgba(221, 160, 221, 1);" id="revelation-list" class="hidden">
+            <ul>
+                <li>요한계시록</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 6열 - 신약성경 5종류 -->
+    <div class="hidden bg-right" style="text-align:left ; grid-column: 6 / span 1; grid-row: span 5;" id="new-testament-sections" class="hidden">
+        <h4 style="color : rgba(221, 160, 221, 1);">4복음서</h4>
+        <div class="button-group">
+            <button href="path_to_gospels.html" class="button">Quick</button>
+            <button class="button" onclick="toggleVisibility('gospels-books-list')">Deep</button>
+        </div>
+        <h4 style="color : rgba(221, 160, 221, 0.9);">역사서</h4>
+        <div class="button-group">
+            <button href="path_to_acts.html" class="button">Quick</button>
+            <button class="button" onclick="toggleVisibility('acts-books-list')">Deep</button>
+        </div>
+        <h4 style="color : rgba(221, 160, 221, 0.8);">바울서신</h4>
+        <div class="button-group">
+            <button href="path_to_pauline_epistles.html" class="button">Quick</button>
+            <button class="button" onclick="toggleVisibility('pauline-epistles-list')">Deep</button>
+        </div>
+        <h4 style="color : rgba(221, 160, 221, 0.9);">일반서신</h4>
+        <div class="button-group">
+            <button href="path_to_general_epistles.html" class="button">Quick</button>
+            <button class="button" onclick="toggleVisibility('general-epistles-list')">Deep</button>
+        </div>
+        <h4 style="color : rgba(221, 160, 221, 1);">예언서</h4>
+        <div class="button-group">
+            <button href="path_to_revelation.html" class="button">Quick</button>
+            <button class="button" onclick="toggleVisibility('revelation-list')">Deep</button>
+        </div>
+    </div>
+    
+    <!-- 7열 - 신약성경 섹션 -->
+    <div class="bg-right content" style="text-align:left ; grid-column: 7 / span 1; grid-row: span 5;">
+        <h2>신약성경</h2>
+        <div class="button-group">
+            <button href="path_to_new_testament_page.html" class="button">Quick</button>
+            <button class="button" onclick="toggleVisibility('new-testament-sections')">Deep</button>
+        </div>
+    </div>
+
+    {% comment %} <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> 
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> {% endcomment %}
+</body>
+    
+</html>

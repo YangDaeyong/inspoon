@@ -1,0 +1,94 @@
+{% load insp_filter %}
+<div id="inspiration-comments-container-{{ object_id }}">
+    {% comment %} <div> {% endcomment %}
+        <div class="inspiration-comments" data-inspiration-id="{{ object_id }}">
+            <p id="NewCommentsContainer-{{ object_id }}"></p>
+            {% for comment in comments %}
+            <div class="card-body" style="background-color: #fff5ee;">
+                <div id="comment-{{ comment.id }}">
+                    <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+                    <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                    {% if user == comment.writer %}
+                        <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:edit_comment' comment.id %}">수정</a>    
+                        <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary delete-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:delete_comment' comment.id %}" data-object-type="comment">삭제</a>
+                    {% endif %}
+                        <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                        <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ object_id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}">댓글</button>
+                        <div id="reply-form-{{ comment.id }}" class="collapse"></div>
+                    {% endif %}
+                    {% if replies_count|dictkey:comment.id > 0 %}
+                    <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}">
+                        {{ replies_count|dictkey:comment.id }}개
+                    </button>
+                    <div id="comment-{{ comment.id }}-replies" class="collapse">
+                        {% include 'insp/partials/replies_section.html' with replies=replies|dictkey:comment.id %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            <div id="pagination-container-inspiration-{{ inspiration.id }}" class="d-flex justify-content-center">
+                {% if comments.has_previous %}
+                    <button class="btn btn-sm btn-outline-secondary page-btn" data-url="{% url 'insp:comments' comment_type='inspiration' object_id=object_id %}?page={{ comments.previous_page_number }}&sort={{ sort }}" data-container="inspiration-comments-container-{{ object_id }}">이전</button>
+                {% endif %}
+                {% if comments.has_next %}
+                    <button class="btn btn-sm btn-outline-secondary page-btn" data-url="{% url 'insp:comments' comment_type='inspiration' object_id=object_id %}?page={{ comments.next_page_number }}&sort={{ sort }}" data-container="inspiration-comments-container-{{ object_id }}">다음</button>
+                {% endif %}
+            </div>
+        </div>
+    {% comment %} </div> {% endcomment %}
+</div>
+<script>
+
+</script>
+
+
+
+
+
+{% comment %} {% load insp_filter %}
+<div id="inspirationCommentSection-{{ inspiration.id }}">   
+    <div id="inspiration-comments-container-{{ inspiration.id }}">
+    <div class="inspiration-comments" data-inspiration-id="{{ inspiration.id }}">
+        {% for comment in inspirations_comments %}
+        <div class="card-body">
+            <div id="comment-{{ comment.id }}">
+                <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+                <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                {% if request.user == comment.writer %}
+                <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}">수정</a>
+                <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                {% endif %}
+                <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                {% if user.is_authenticated %}
+                <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}">댓글</button>
+                {% endif %}
+            </div>
+            <div id="reply-form-{{ comment.id }}" class="collapse reply-form-container"></div>
+            {% if comment.replies.count > 0 %}
+            <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}">
+                {{ comment.replies.count }}개 댓글
+            </button>
+            <div id="replies-{{ comment.id }}" class="collapse">
+                {% include 'insp/partials/replies_section.html' with replies=comment.replies.all %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <div id="pagination-container-inspiration-{{ inspiration.id }}" class="d-flex justify-content-center">
+            {% if inspirations_comments.has_previous %} 
+            <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ inspirations_comments.previous_page_number }}" data-sort="{{ sort }}" data-inspiration-id="{{ inspiration.id }}" data-url="{% url 'insp:inspiration_comments' inspirations_comments.previous_page_number %}?inspiration_id={{ inspiration.id }}&sort={{ sort }}" data-container="inspirationCommentSection-{{ inspiration.id }}">이전</button> 
+            {% endif %} 
+            {% if inspirations_comments.has_next %} 
+            <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ inspirations_comments.next_page_number }}" data-sort="{{ sort }}" data-inspiration-id="{{ inspiration.id }}" data-url="{% url 'insp:inspiration_comments' inspirations_comments.next_page_number %}?inspiration_id={{ inspiration.id }}&sort={{ sort }}" data-container="inspirationCommentSection-{{ inspiration.id }}">다음</button> 
+            {% endif %}
+        </div>
+    </div>
+    </div>
+</div>
+<script>
+    attachEventHandlers();  // AJAX로 로드된 후 이벤트 리스너 재연결
+</script> {% endcomment %}

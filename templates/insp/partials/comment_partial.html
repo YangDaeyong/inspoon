@@ -1,0 +1,20 @@
+<div class="card-body" id="comment-{{ comment.id }}">
+    <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+    <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+    {% if request.user == comment.writer %}
+    <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}">수정</a>
+    <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+    {% endif %}
+    <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+    <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+    {% if user.is_authenticated %}
+    <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}" data-container-id="comment-{{ comment.id }}-replies">댓글</button>
+    {% endif %}
+    <div id="reply-form-{{ comment.id }}" class="collapse reply-form-container"></div>
+    {% if wisdom_replies_count.comment.id > 0 %}
+    <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}"> {{ wisdom_replies_count.comment.id }}개 댓글 </button>
+    <div id="comment-{{ comment.id }}-replies" class="collapse">
+        {% include 'insp/partials/replies_section.html' with replies=wisdom_replies.comment.id %}
+    </div>
+    {% endif %}
+</div>

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load insp_filter %}
+<!-- 답변 수정 -->
+<div class="container my-3">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <div class="mb-3">
+            <label for="content" class="form-label">Inspiration Share-글/시/그림/음악 etc</label>
+            <textarea class="form-control" name="content" id="content" rows="10">{{ form.content.value|default_if_none:'' }}</textarea>
+        </div>
+        <div class="mt-3">
+            <label for="file" class="form-label">파일 업로드 (사진/음악)</label>
+            <input type="file" name="file" id="file" class="form-control" multiple>
+            {% if inspiration.file %}
+                <div class="mt-2">
+                    {% if inspiration.file.url|is_image %}
+                        <img src="{{ inspiration.file.url }}" class="img-fluid" alt="Uploaded Image">
+                    {% elif inspiration.file.url|is_audio %}
+                        <audio controls>
+                            <source src="{{ inspiration.file.url }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">share_insp</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% comment %} <div id="inspiration_list-container"> {% endcomment %}
+{% for inspiration in inspiration_list %}
+    {% load insp_filter %}
+    <div class="card-body" id="inspiration-{{ inspiration.id }}">
+        <div class="card-body">
+            <div class="card-text">{{ inspiration.content|mark }}</div>
+            
+            {% if inspiration.file %}
+                    <!-- 파일 URL 출력 --> 
+                    <p>파일 URL: {{ inspiration.file.url }}</p>
+                {% if inspiration.file.url|is_image %}
+                    <img src="{{ inspiration.file.url }}" class="img-fluid" alt="Uploaded Image">
+                {% elif inspiration.file.url|is_audio %}
+                    <audio controls>
+                        <source src="{{ inspiration.file.url }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                {% endif %}
+            {% endif %}
+            
+            <!-- 작성자, 작성일시, 수정일시 정보 -->
+            <div class="mt-3">
+                <small class="text-muted">
+                    {{ inspiration.writer.username }} 작성 {{ inspiration.create_date|date:"Y-m-d H:i" }} <br>
+                    {% if inspiration.modify_date %}
+                        수정 {{ inspiration.modify_date|date:"Y-m-d H:i" }}
+                    {% endif %}
+                </small>
+            </div>
+        
+    
+            <div class="my-3">
+                <a href="javascript:void(0)" data-uri="{% url 'insp:inspiration_vote' inspiration.id %}" class="recommend btn btn-sm btn-outline-secondary"> 추천
+                    <span class="badge rounded-pill bg-success">{{ inspiration.voter.count }}</span>
+                </a>
+                {% if request.user == inspiration.writer %}
+                <a href="{% url 'insp:inspiration_modify' inspiration.id %}" class="btn btn-sm btn-outline-secondary">수정</a>
+                <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary" data-uri="{% url 'insp:inspiration_delete' inspiration.id %}">삭제</a>
+                {% endif %}
+            </div>
+        
+            <hr>
+            <!-- inspiration에 댓글 폼 -->
+            <h6 class="border-bottom my-3 py-2">{{ inspirations_comments|get_item:inspiration.id|length }}개 댓글
+                <button class="btn btn-sm btn-outline-secondary toggle-comment-btn" type="button" data-target="#inspirationCommentSection-{{ inspiration.id }}" id="toggleCommentButton-{{ inspiration.id }}">OPEN</button>
+                <div class="dropdown d-inline">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        정렬 기준
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                        <li><a class="dropdown-item" href="#" data-sort="-voter" data-section="inspiration">인기 댓글순</a></li>
+                        <li><a class="dropdown-item" href="#" data-sort="-create_date" data-section="inspiration">최신순</a></li>
+                    </ul>
+                </div>
+            </h6>
+            <div id="inspirationCommentSection-{{ inspiration.id }}" class="collapse" data-target-section="inspirationCommentSection-{{ inspiration.id }}">
+            {% if user.is_authenticated %}
+                <form action="{% url 'insp:add_comment_to_inspiration' inspiration_id=inspiration.id %}" method="post" class="my-3 comment-form" data-target-section="inspirationCommentSection">
+                    {% csrf_token %}
+                    {% include "form_errors.html" %}
+                    <div class="mb-3 d-flex">
+                        <textarea id="content-{{ forloop.counter }}" name="content" class="form-control comment-textarea inspiration-content" rows="1" data-id="{{ forloop.counter }}" onfocus="showButtonAndExpand('{{ forloop.counter }}')" onblur="hideButtonAndShrink('{{ forloop.counter }}')"></textarea>
+                        <button id="submit-button-{{ forloop.counter }}" type="submit" class="btn btn-sm btn-primary submit-button inspiration-button" style="display:none;">댓글</button>
+                    </div>
+                </form>
+            {% endif %}
+            
+            {% if inspirations_comments and inspirations_comments|get_item:inspiration.id %}
+            <div id="inspiration-comments-container">
+                {% for comment in inspirations_comments|get_item:inspiration.id %}
+                영강 댓글 시작
+                        <div class="card-body">
+                            <div id="comment-{{ comment.id }}">
+                                <p id="comment-content-{{ comment.id }}">{{ comment.content }}</p>
+                                <small class="text-muted">{{ comment.writer.username }} {{ comment.create_date|date:"Y-m-d H:i" }}</small>
+                                {% if request.user == comment.writer %}
+                                <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary edit-comment-button" data-comment-id="{{ comment.id }}">수정</a>
+                                <a href="{% url 'insp:delete_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">삭제</a>
+                                {% endif %}
+                                <button class="btn btn-sm btn-outline-secondary vote-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:vote_comment' comment.id %}">👍</button>
+                                <span class="badge rounded-pill bg-success" id="vote-count-{{ comment.id }}">{{ comment.voter.count }}</span>
+                                {% if user.is_authenticated %}
+                                <button class="btn btn-sm btn-outline-secondary reply-button" data-comment-id="{{ comment.id }}" data-url="{% url 'insp:add_comment_to_comment' comment_id=comment.id %}">댓글</button>
+                                {% endif %}
+                            </div>
+                                <div id="reply-form-{{ comment.id }}" class="collapse reply-form-container"></div>
+                                {% if comment.replies.count > 0 %}
+                                <button class="btn btn-link show-replies-button" data-comment-id="{{ comment.id }}">
+                                    {{ comment.replies.count }}개 댓글
+                                </button>
+                                <div id="replies-{{ comment.id }}" class="collapse">
+                                대댓글 시작
+                                {% include 'insp/partials/replies_section.html' with replies=comment.replies.all %}
+                                대댓글 끝
+                                </div>
+                                {% endif %}
+                        </div>
+                    영감 댓글 끝
+                    {% endfor %}
+                    <div id="pagination-container-inspiration-{{ inspiration.id }}" class="d-flex justify-content-center">
+                        {% if inspirations_comments|get_item:inspiration.id.has_previous %}
+                        <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ inspirations_comments.previous_page_number }}" data-sort="{{ sort }}" data-inspiration-id="{{ inspiration.id }}" data-url="{% url 'insp:inspiration_comments' inspirations_comments.previous_page_number %}?inspiration_id={{ inspiration.id }}&sort={{ sort }}" data-container="inspiration-comments-container-{{ inspiration.id }}">이전</button>
+                        {% endif %}
+                        {% if inspirations_comments|get_item:inspiration.id.has_next %}
+                        <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ inspirations_comments.next_page_number }}" data-sort="{{ sort }}" data-inspiration-id="{{ inspiration.id }}" data-url="{% url 'insp:inspiration_comments' inspirations_comments.next_page_number %}?inspiration_id={{ inspiration.id }}&sort={{ sort }}" data-container="inspiration-comments-container-{{ inspiration.id }}">다음</button>
+                        {% endif %}
+                    </div>
+                    </div>
+            {% endif %}
+        </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div id="pagination-container-inspiration_list" class="d-flex justify-content-center">
+        {% if inspiration_list.has_previous %}
+        <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ inspiration_list.previous_page_number }}" data-url="{% url 'insp:inspiration_list' inspiration_list.previous_page_number %}?inspiration_id={{ inspiration.id }}&sort={{ sort }}" data-container="inspiration_list-container">이전</button> 
+        {% endif %} 
+        {% if inspiration_list.has_next %} 
+        <button class="btn btn-sm btn-outline-secondary page-btn" data-page="{{ inspiration_list.next_page_number }}" data-url="{% url 'insp:inspiration_list' inspiration_list.next_page_number %}?inspiration_id={{ inspiration.id }}&sort={{ sort }}" data-container="inspiration_list-container" >다음</button>
+        {% endif %}
+    </div>
+
+{% comment %} </div> {% endcomment %}
+<script>
+    attachEventHandlers();  // AJAX로 로드된 후 이벤트 리스너 재연결
+</script>
