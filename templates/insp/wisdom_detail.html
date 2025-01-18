@@ -21,7 +21,31 @@
             {% comment %} {{ wisdom.pages }} | {{ wisdom.author }} | {{ wisdom.publisher }} | {{ wisdom.translator }} {% endcomment %}
         </span>
     </div>
-    
+    <!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Comments</title>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        <h1>Comments</h1>
+        <ul>
+            {% for comment in comments %}
+                {% if comment.author in authors %}
+                    <li>
+                        <p>{{ comment.content }}</p>
+                        <p>작성자: {{ comment.author }}</p>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Please log in to view comments.</p>
+    {% endif %}
+</body>
+</html>
+
     <div class="card my-3">
         <div class="card-body" style="background-color: #afeeee;">
             <div class="card-text">{{ wisdom.content|mark }}</div>
