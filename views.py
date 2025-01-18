@@ -1,7 +1,7 @@
 from django.shortcuts import render
-from .models import Comment
+from .models import Wisdom
 
-def load_comments(request):
+def wisdom_detail(request):
     comments = Comment.objects.all()
     authors = Comment.objects.values_list('author', flat=True).distinct()
     return render(request, 'comments.html', {'comments': comments, 'authors': authors})
